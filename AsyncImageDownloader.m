@@ -2,22 +2,38 @@
 //  AsyncImageDownloader.m
 //
 //  Created by Kyle Banks on 2012-11-29.
+//  Modified by Nicolas Schteinschraber 2013-05-30
 //
 
 #import "AsyncImageDownloader.h"
 
 @implementation AsyncImageDownloader
 
-@synthesize mediaURL;
+@synthesize mediaURL, fileURL;
 
--(id)initWithMediaURL:(NSString *)theMediaURL successBlock:(void (^)(UIImage *image))success failBlock:(void(^)(NSError *error))fail;
+-(id)initWithMediaURL:(NSString *)theMediaURL successBlock:(void (^)(UIImage *image))success failBlock:(void(^)(NSError *error))fail
 {
     self = [super init];
     
     if(self)
     {
         [self setMediaURL:theMediaURL];
+        [self setFileURL:nil];
         successCallback = success;
+        failCallback = fail;
+    }
+    
+    return self;
+}
+-(id)initWithFileURL:(NSString *)theFileURL successBlock:(void (^)(NSData *data))success failBlock:(void(^)(NSError *error))fail
+{
+    self = [super init];
+    
+    if(self)
+    {
+        [self setMediaURL:nil];
+        [self setFileURL:theFileURL];
+        successCallbackFile = success;
         failCallback = fail;
     }
     
@@ -27,9 +43,14 @@
 //Perform the actual download
 -(void)startDownload
 {
-    imageData = [[NSMutableData alloc] init];
+    fileData = [[NSMutableData alloc] init];
     
-    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:mediaURL]];
+    NSURLRequest *request = nil;
+    if (fileURL)
+        request = [NSURLRequest requestWithURL:[NSURL URLWithString:fileURL]];
+    else
+        request = [NSURLRequest requestWithURL:[NSURL URLWithString:mediaURL]];
+
     NSURLConnection *connection = [[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:YES];
     if(!connection)
     {
@@ -56,18 +77,23 @@
 }
 -(void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
 {
-    [imageData appendData:data];
+    [fileData appendData:data];
 }
 -(void)connectionDidFinishLoading:(NSURLConnection *)connection
 {
-    if(imageData == nil)
+
+    if(fileData == nil)
     {
         failCallback([NSError errorWithDomain:@"No data received" code:0 userInfo:nil]);
     }
     else
     {
-        UIImage *image = [UIImage imageWithData:imageData];
-        successCallback(image);
+        if (fileURL) {
+            successCallbackFile(fileData);
+        } else {
+            UIImage *image = [UIImage imageWithData:fileData];
+            successCallback(image);
+        }
     }    
 }
 
