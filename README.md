@@ -1,5 +1,6 @@
 AsyncImageDownloader
 ====================
+[![Pod version](https://badge.fury.io/co/AsyncImageDownloader.svg)](http://badge.fury.io/co/AsyncImageDownloader)
 
 A very simple and light-weight asynchronous image downloader for iOS and Mac OS. 
 
